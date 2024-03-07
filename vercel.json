@@ -6,13 +6,6 @@
             "use": "@vercel/node"
         }
     ],
-    "redirects": [
-        {
-            "source": "/",
-            "destination": "/index.html",
-            "permanent": false
-        }
-    ],
     "routes": [
         {
             "src": "/(.*)",
