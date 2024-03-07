@@ -1,5 +1,4 @@
 {
-    "@schema": "https://json.schemastore.org/vercel.json",
     "version": 2,
     "builds": [
         {
