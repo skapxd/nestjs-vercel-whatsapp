@@ -1,9 +1,17 @@
 {
+    "@schema": "https://json.schemastore.org/vercel.json",
     "version": 2,
     "builds": [
         {
             "src": "src/main.ts",
             "use": "@vercel/node"
+        }
+    ],
+    "redirects": [
+        {
+            "source": "/",
+            "destination": "/index.html",
+            "permanent": false
         }
     ],
     "routes": [
