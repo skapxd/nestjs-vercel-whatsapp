@@ -40,7 +40,7 @@ export function mainConfig(app: INestApplication) {
 
   const document = SwaggerModule.createDocument(app, config, {});
 
-  SwaggerModule.setup('api', app, document, {
+  SwaggerModule.setup('/', app, document, {
     explorer: true,
     customCss: theme.getBuffer(SwaggerThemeNameEnum.DARK),
   });
