@@ -43,5 +43,5 @@ export function mainConfig(app: INestApplication) {
   SwaggerModule.setup('/', app, document, {
     explorer: true,
     customCss: theme.getBuffer(SwaggerThemeNameEnum.DARK),
-  });
+   });
 }
