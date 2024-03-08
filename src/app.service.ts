@@ -81,13 +81,20 @@ export class AppService {
 
     this.sock.ev.on('connection.update', async (update) => {
       const { connection, lastDisconnect } = update;
+      console.log({
+        statusCode: (lastDisconnect?.error as any)?.output?.statusCode,
+      });
+
+      if ((lastDisconnect?.error as any)?.output?.statusCode === 401)
+        await this.del(process.env.NODE_ENV);
+
       if (connection === 'close') {
         const shouldReconnect =
-          (lastDisconnect.error as any)?.output?.statusCode !==
+          (lastDisconnect?.error as any)?.output?.statusCode !==
           DisconnectReason.loggedOut;
         console.log(
           'connection closed due to ',
-          lastDisconnect.error,
+          lastDisconnect?.error,
           ', reconnecting ',
           shouldReconnect,
         );
