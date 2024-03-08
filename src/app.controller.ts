@@ -8,6 +8,6 @@ export class AppController {
 
   @Post()
   sendMessage(@Body() dto: SendMessageDTO) {
-    return this.appService.sendMessages(dto);
+    return this.appService.sendMessage(dto);
   }
 }

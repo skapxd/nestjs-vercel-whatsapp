@@ -18,80 +18,119 @@ export class AppService {
   ) {}
 
   private sock: ReturnType<typeof makeWASocket>;
+
+  private del = async (key: string) => {
+    await this.model.deleteMany({ key: new RegExp(key) });
+  };
+
   async connectToWhatsApp(): Promise<ReturnType<typeof makeWASocket>> {
-    return new Promise(async (resolve, reject) => {
-      const env = process.env.NODE_ENV;
+    let resolve: (value: ReturnType<typeof makeWASocket>) => void;
+    let reject: (reason?: any) => void;
 
-      const { state, saveCreds } = await useAuthState(`whatsapp_${env}`, {
-        del: async (key) => {
-          await this.model.deleteOne({ key });
-        },
-        get: async (key) => {
-          const resp = await this.model.findOne({ key });
-          return resp?.data;
-        },
-        set: async (key, value) => {
-          await this.model.updateOne(
-            { key },
-            {
-              data: value,
-            },
-            {
-              upsert: true,
-              returnDocument: 'after',
-              new: true,
-            },
-          );
-        },
-      });
+    const promise: Promise<ReturnType<typeof makeWASocket>> = new Promise(
+      async (res, rej) => {
+        resolve = res;
+        reject = rej;
+      },
+    );
 
-      this.sock = makeWASocket({
-        auth: {
-          creds: state.creds,
-          keys: makeCacheableSignalKeyStore(state.keys, logger as any),
-        },
-        printQRInTerminal: true,
-      });
+    const env = process.env.NODE_ENV;
 
-      this.sock.ev.on('connection.update', async (update) => {
-        console.log('connection update', update);
-        const { connection, lastDisconnect } = update;
-        if (connection === 'close') {
-          const shouldReconnect =
-            (lastDisconnect.error as any)?.output?.statusCode !==
-            DisconnectReason.loggedOut;
-          console.log(
-            'connection closed due to ',
-            lastDisconnect.error,
-            ', reconnecting ',
-            shouldReconnect,
-          );
-          // reconnect if not logged out
-          if (shouldReconnect) {
-            this.connectToWhatsApp().catch((e) => {
-              reject(e);
-              console.error('error reconnecting', e.message);
-            });
-          }
-        } else if (connection === 'open') {
-          console.log('opened connection');
-          resolve(this.sock);
-        }
-      });
-
-      this.sock.ev.on('creds.update', async () => {
-        await saveCreds();
-      });
-
-      this.sock.ev.on('messages.upsert', async (m) => {
-        console.log(JSON.stringify(m, undefined, 2));
-
-        console.log('replying to', m.messages[0].key.remoteJid);
-      });
+    const { state, saveCreds } = await useAuthState(`whatsapp_${env}`, {
+      del: async (key) => {
+        await this.model.deleteOne({ key });
+      },
+      get: async (key) => {
+        const resp = await this.model.findOne({ key });
+        return resp?.data;
+      },
+      set: async (key, value) => {
+        await this.model.updateOne(
+          { key },
+          {
+            data: value,
+          },
+          {
+            upsert: true,
+            returnDocument: 'after',
+            new: true,
+          },
+        );
+      },
     });
+
+    this.sock = makeWASocket({
+      auth: {
+        creds: state.creds,
+        keys: makeCacheableSignalKeyStore(state.keys, logger as any),
+      },
+      printQRInTerminal: true,
+    });
+
+    this.sock.ev.on('creds.update', async () => {
+      await saveCreds();
+    });
+
+    this.sock.ev.on('messages.upsert', async (m) => {
+      console.log('replying to', m.messages[0].key.remoteJid);
+      if (m.type === 'notify')
+        await this.sock.sendMessage(m.messages[0].key.remoteJid, {
+          text: 'hello',
+        });
+    });
+
+    this.sock.ev.on('connection.update', async (update) => {
+      console.log('connection update', update);
+      const { connection, lastDisconnect } = update;
+
+      if (connection === 'open') {
+        console.log('opened connection');
+        return resolve(this.sock);
+      }
+
+      if ((lastDisconnect?.error as any)?.output?.statusCode === 515)
+        await this.connectToWhatsApp();
+
+      if ((lastDisconnect?.error as any)?.output?.statusCode === 401) {
+        await this.del(process.env.NODE_ENV);
+        return await this.connectToWhatsApp();
+      }
+
+      const shouldReconnect =
+        (lastDisconnect?.error as any)?.output?.statusCode !==
+        DisconnectReason.loggedOut;
+
+      console.log(
+        'connection closed due to ',
+        lastDisconnect?.error,
+        ', reconnecting ',
+        shouldReconnect,
+      );
+      console.log({ output: (lastDisconnect?.error as any)?.output });
+
+      if (connection === 'close' && shouldReconnect) {
+        // reconnect if not logged out
+        await this.connectToWhatsApp().catch((e) => {
+          reject(e);
+          console.error('error reconnecting', e.message);
+          process.exit(1);
+        });
+      }
+    });
+
+    return promise;
   }
 
-  async sendMessages(dto: SendMessageDTO) {
-    return dto;
+  async sendMessage(dto: SendMessageDTO) {
+    try {
+      this.sock
+        .sendMessage(`${dto.phone}@s.whatsapp.net`, {
+          text: dto.message,
+        })
+        .catch((e) => console.error('error sending message', e.message));
+    } catch (error) {
+      console.error('error sending message', (error as Error).message);
+      return;
+    }
   }
 }
