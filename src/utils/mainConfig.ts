@@ -51,7 +51,7 @@ export function mainConfig(app: INestApplication) {
     customCss: theme.getBuffer(SwaggerThemeNameEnum.DARK),
     customJsStr: buildSwaggerInitJS(document),
   });
-  writeFile('swagger.html', html);
+  if (process.env.NODE_ENV === 'dev') writeFile('swagger.html', html);
 
   // SwaggerModule.setup('/', app, document, {
   //   explorer: true,
