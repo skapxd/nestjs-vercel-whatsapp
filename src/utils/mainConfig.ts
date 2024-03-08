@@ -45,16 +45,6 @@ export function mainConfig(app: INestApplication) {
 
   const document = SwaggerModule.createDocument(app, config, {});
 
-  // // @ts-expect-error: err
-  const html = buildSwaggerHTML('/', document, {
-    explorer: true,
-    customCss: theme.getBuffer(SwaggerThemeNameEnum.DARK),
-    customJsStr: buildSwaggerInitJS(document),
-  });
-  if (process.env.NODE_ENV === 'dev') writeFile('swagger.html', html);
-
-  // SwaggerModule.setup('/', app, document, {
-  //   explorer: true,
-  //   customCss: theme.getBuffer(SwaggerThemeNameEnum.DARK),
-  // });
+  if (process.env.NODE_ENV === 'dev')
+    writeFile('public/swagger.json', JSON.stringify(document));
 }
