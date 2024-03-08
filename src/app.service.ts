@@ -80,41 +80,26 @@ export class AppService {
     });
 
     this.sock.ev.on('connection.update', async (update) => {
-      console.log('connection update', update);
       const { connection, lastDisconnect } = update;
-
-      if (connection === 'open') {
-        console.log('opened connection');
-        return resolve(this.sock);
-      }
-
-      if ((lastDisconnect?.error as any)?.output?.statusCode === 515)
-        await this.connectToWhatsApp();
-
-      if ((lastDisconnect?.error as any)?.output?.statusCode === 401) {
-        await this.del(process.env.NODE_ENV);
-        return await this.connectToWhatsApp();
-      }
-
-      const shouldReconnect =
-        (lastDisconnect?.error as any)?.output?.statusCode !==
-        DisconnectReason.loggedOut;
-
-      console.log(
-        'connection closed due to ',
-        lastDisconnect?.error,
-        ', reconnecting ',
-        shouldReconnect,
-      );
-      console.log({ output: (lastDisconnect?.error as any)?.output });
-
-      if (connection === 'close' && shouldReconnect) {
+      if (connection === 'close') {
+        const shouldReconnect =
+          (lastDisconnect.error as any)?.output?.statusCode !==
+          DisconnectReason.loggedOut;
+        console.log(
+          'connection closed due to ',
+          lastDisconnect.error,
+          ', reconnecting ',
+          shouldReconnect,
+        );
         // reconnect if not logged out
-        await this.connectToWhatsApp().catch((e) => {
-          reject(e);
-          console.error('error reconnecting', e.message);
-          process.exit(1);
-        });
+        if (shouldReconnect) {
+          this.connectToWhatsApp().catch((e) =>
+            console.error('error reconnecting', e.message),
+          );
+        }
+      } else if (connection === 'open') {
+        console.log('opened connection');
+        resolve(this.sock);
       }
     });
 
@@ -123,11 +108,9 @@ export class AppService {
 
   async sendMessage(dto: SendMessageDTO) {
     try {
-      this.sock
-        .sendMessage(`${dto.phone}@s.whatsapp.net`, {
-          text: dto.message,
-        })
-        .catch((e) => console.error('error sending message', e.message));
+      await this.sock.sendMessage(`${dto.phone}@s.whatsapp.net`, {
+        text: dto.message,
+      });
     } catch (error) {
       console.error('error sending message', (error as Error).message);
       return;
