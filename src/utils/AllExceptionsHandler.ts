@@ -46,7 +46,11 @@ export class AllExceptionsHandler extends BaseExceptionFilter {
     } catch (error) {
       return response
         .status(500)
-        .json(new InternalServerErrorException(error.message).getResponse());
+        .json(
+          new InternalServerErrorException(
+            (error as Error).message,
+          ).getResponse(),
+        );
     }
   }
 }

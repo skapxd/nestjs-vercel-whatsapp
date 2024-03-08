@@ -6,9 +6,14 @@ import {
 } from '@nestjs/common';
 import { HttpAdapterHost } from '@nestjs/core';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
+import {
+  buildSwaggerHTML,
+  buildSwaggerInitJS,
+} from '@nestjs/swagger/dist/swagger-ui';
 import { AllExceptionsHandler } from './AllExceptionsHandler';
 import { SwaggerTheme } from 'swagger-themes';
 import { SwaggerThemeNameEnum } from 'swagger-themes/build/enums/swagger-theme-name';
+import { writeFile } from 'fs/promises';
 
 export function mainConfig(app: INestApplication) {
   app.useGlobalPipes(
@@ -40,8 +45,16 @@ export function mainConfig(app: INestApplication) {
 
   const document = SwaggerModule.createDocument(app, config, {});
 
-  SwaggerModule.setup('/', app, document, {
+  // // @ts-expect-error: err
+  const html = buildSwaggerHTML('/', document, {
     explorer: true,
     customCss: theme.getBuffer(SwaggerThemeNameEnum.DARK),
-   });
+    customJsStr: buildSwaggerInitJS(document),
+  });
+  writeFile('swagger.html', html);
+
+  // SwaggerModule.setup('/', app, document, {
+  //   explorer: true,
+  //   customCss: theme.getBuffer(SwaggerThemeNameEnum.DARK),
+  // });
 }

@@ -6,11 +6,6 @@ import { SendMessageDTO } from './dto/send-message.dto';
 export class AppController {
   constructor(private readonly appService: AppService) {}
 
-  @Get('test')
-  getHello() {
-    return this.appService.getHello();
-  }
-
   @Post()
   sendMessage(@Body() body: SendMessageDTO) {
     return body;
