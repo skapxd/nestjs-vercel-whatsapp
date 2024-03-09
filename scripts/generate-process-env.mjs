@@ -11,10 +11,11 @@ const arr = fileEnv
 
 const template = [
   'declare namespace NodeJS {',
-  'export interface ProcessEnv {',
-  ...arr.map((line) => line),
+  '  export interface ProcessEnv {',
+  ...arr.map((line) => '    ' + line + ';'),
+  '  }',
   '}',
-  '}',
+  '',
 ];
 
 writeFileSync('process.d.ts', template.join('\n'));
