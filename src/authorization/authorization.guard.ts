@@ -26,7 +26,7 @@ export class AuthorizationGuard implements CanActivate {
 
     if (!authorization) throw new UnauthorizedException();
 
-    const row = await this.model.findOne({ ip: request.ip });
+    // const row = await this.model.findOne({ ip: request.ip });
 
     if (authorization !== token) throw new UnauthorizedException();
 

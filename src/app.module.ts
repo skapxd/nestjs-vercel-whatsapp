@@ -8,7 +8,10 @@ import {
   WhatsAppAuthState,
   WhatsAppAuthStateSchema,
 } from './entity/whats-app-auto-state.entity';
-import { AuthorizationApi, AuthorizationApiSchema } from './entity/authorization-api.entity';
+import {
+  AuthorizationApi,
+  AuthorizationApiSchema,
+} from './entity/authorization-api.entity';
 
 @Module({
   imports: [
