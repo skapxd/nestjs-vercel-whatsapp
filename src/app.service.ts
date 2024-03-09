@@ -115,7 +115,7 @@ export class AppService {
 
   async sendMessage(dto: SendMessageDTO) {
     try {
-      this.sock.sendMessage(`${dto.phone}@s.whatsapp.net`, {
+      await this.sock.sendMessage(`${dto.phone}@s.whatsapp.net`, {
         text: dto.message,
       });
     } catch (error) {
