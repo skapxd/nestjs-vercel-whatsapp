@@ -12,6 +12,8 @@ import { logger } from './utils/logger';
 
 @Injectable()
 export class AppService {
+  private env = process.env.NODE_ENV;
+
   constructor(
     @InjectModel(MongooseCollection.name)
     private readonly model: Model<MongooseDocument>,
@@ -32,9 +34,7 @@ export class AppService {
       },
     );
 
-    const env = process.env.NODE_ENV;
-
-    const { state, saveCreds } = await useAuthState(`whatsapp_${env}`, {
+    const { state, saveCreds } = await useAuthState(`whatsapp_${this.env}`, {
       del: async (key) => {
         await this.model.deleteOne({ key });
       },
@@ -80,33 +80,25 @@ export class AppService {
     this.sock.ev.on('connection.update', async (update) => {
       const { connection, lastDisconnect } = update;
       console.log({
+        connection,
         statusCode: (lastDisconnect?.error as any)?.output?.statusCode,
       });
 
       if (connection === 'open') {
-        console.log('opened connection');
         return resolve(this.sock);
       }
 
       if ((lastDisconnect?.error as any)?.output?.statusCode === 401)
-        await this.del(process.env.NODE_ENV);
+        await this.del(this.env);
 
-      if (connection === 'close') {
-        const shouldReconnect =
-          (lastDisconnect?.error as any)?.output?.statusCode !==
-          DisconnectReason.loggedOut;
-        console.log(
-          'connection closed due to ',
-          lastDisconnect?.error,
-          ', reconnecting ',
-          shouldReconnect,
+      const shouldReconnect =
+        (lastDisconnect?.error as any)?.output?.statusCode !==
+        DisconnectReason.loggedOut;
+
+      if (connection === 'close' && shouldReconnect) {
+        await this.connectToWhatsApp().catch((e) =>
+          console.error('error reconnecting', e.message),
         );
-        // reconnect if not logged out
-        if (shouldReconnect) {
-          this.connectToWhatsApp().catch((e) =>
-            console.error('error reconnecting', e.message),
-          );
-        }
       }
     });
 

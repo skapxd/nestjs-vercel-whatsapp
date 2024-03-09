@@ -18,7 +18,7 @@
     "strictBindCallApply": false,
     "forceConsistentCasingInFileNames": false,
     "noFallthroughCasesInSwitch": false,
-    "typeRoots": []
+    // "typeRoots": []
   },
   "exclude": ["node_modules"]
 }

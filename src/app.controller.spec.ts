@@ -1,22 +1,61 @@
+import 'dotenv/config';
 import { Test, TestingModule } from '@nestjs/testing';
 import { AppController } from './app.controller';
+import { INestApplication } from '@nestjs/common';
+import { mainConfig } from './utils/mainConfig';
+import * as request from 'supertest';
+import { ConfigModule } from '@nestjs/config';
+import { MongooseModule } from '@nestjs/mongoose';
+import { MongooseCollection, MongooseSchema } from './entity/mongoose.entity';
 import { AppService } from './app.service';
 
 describe('AppController', () => {
-  let appController: AppController;
+  let app: INestApplication;
 
-  beforeEach(async () => {
-    const app: TestingModule = await Test.createTestingModule({
+  beforeAll(async () => {
+    const module: TestingModule = await Test.createTestingModule({
+      imports: [
+        ConfigModule.forRoot(),
+        MongooseModule.forRoot(process.env.MONGO_DB),
+        MongooseModule.forFeature([
+          { name: MongooseCollection.name, schema: MongooseSchema },
+        ]),
+      ],
       controllers: [AppController],
-      providers: [AppService],
+      providers: [
+        AppService,
+        {
+          provide: AppService.name,
+          useFactory: async (service: AppService): Promise<any> => {
+            await service.connectToWhatsApp();
+            return service;
+          },
+          inject: [AppService],
+        },
+      ],
     }).compile();
 
-    appController = app.get<AppController>(AppController);
+    app = module.createNestApplication();
+
+    mainConfig(app);
+
+    await app.init();
+  }, 1_000_000);
+
+  it('should to be defined', () => {
+    expect(app).toBeDefined();
   });
 
-  describe('root', () => {
-    it('should return "Hello World!"', () => {
-      expect(appController.getHello()).toBe('Hello World!');
-    });
-  });
+  it('should send message to 573216661006', async () => {
+    const resp = await request(app.getHttpServer())
+      .post('/')
+      .send({
+        phone: '573216661006',
+        message: 'Hello world',
+      })
+      .set('Content-Type', 'application/json')
+      .set('Authorization', 'Bearer ' + process.env.API_SECRET);
+
+    expect(resp.status).toBe(201);
+  }, 1_000_000);
 });
