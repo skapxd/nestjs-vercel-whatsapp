@@ -42,7 +42,7 @@ export class AllExceptionsHandler extends BaseExceptionFilter {
 
       this.logger.error(log);
 
-      return response.status(status).json(log);
+      return response.status(status).json(message);
     } catch (error) {
       return response
         .status(500)
