@@ -1,21 +1,20 @@
-import { readFileSync, writeFileSync } from 'fs'
+import { readFileSync, writeFileSync } from 'fs';
 
-const fileEnv = readFileSync('.env', 'utf8')
+const fileEnv = readFileSync('.env', 'utf8');
 
 const arr = fileEnv
   .split(/\n|\r/)
   .map((line) => line.trim())
-  .map((line) => line.startsWith('#') ? "" : line)
+  .map((line) => (line.startsWith('#') ? '' : line))
   .filter(Boolean)
-  .map((line) => line.split('=')[0] + ': string')
+  .map((line) => line.split('=')[0] + ': string');
 
 const template = [
   'declare namespace NodeJS {',
   'export interface ProcessEnv {',
   ...arr.map((line) => line),
   '}',
-  '}'
-]
+  '}',
+];
 
-
-writeFileSync('process.d.ts', template.join('\n'))
+writeFileSync('process.d.ts', template.join('\n'));
