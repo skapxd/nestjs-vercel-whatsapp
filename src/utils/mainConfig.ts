@@ -7,9 +7,7 @@ import {
 import { HttpAdapterHost } from '@nestjs/core';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import { AllExceptionsHandler } from './AllExceptionsHandler';
-import { SwaggerTheme } from 'swagger-themes';
 import { writeFile } from 'fs/promises';
-import { SwaggerThemeNameEnum } from 'swagger-themes/build/enums/swagger-theme-name';
 
 export function mainConfig(app: INestApplication) {
   app.useGlobalPipes(
@@ -28,8 +26,6 @@ export function mainConfig(app: INestApplication) {
     new AllExceptionsHandler(httpRef.httpAdapter.getHttpServer()),
   );
 
-  // const theme = new SwaggerTheme();
-
   const config = new DocumentBuilder()
     .setTitle('WhatsApp example')
     .setDescription('The WhatsApp API description')
@@ -40,13 +36,6 @@ export function mainConfig(app: INestApplication) {
     .build();
 
   const document = SwaggerModule.createDocument(app, config, {});
-
-  const theme = new SwaggerTheme();
-
-  SwaggerModule.setup('api', app, document, {
-    explorer: true,
-    customCss: theme.getBuffer(SwaggerThemeNameEnum.DARK),
-  });
 
   if (process.env.NODE_ENV === 'dev')
     writeFile('public/swagger.json', JSON.stringify(document));

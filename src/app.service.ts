@@ -12,7 +12,7 @@ import { logger } from './utils/logger';
 
 @Injectable()
 export class AppService {
-  private env = 'test' ?? process.env.NODE_ENV;
+  private env = process.env.NODE_ENV;
 
   constructor(
     @InjectModel(MongooseCollection.name)
