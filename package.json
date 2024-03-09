@@ -20,6 +20,7 @@
     "test:debug": "node --inspect-brk -r tsconfig-paths/register -r ts-node/register node_modules/.bin/jest --runInBand",
     "test:e2e": "jest --config ./test/jest-e2e.json",
     "generate-example-env": "node ./scripts/generate-example-env.mjs",
+    "generate-process-env": "node ./scripts/generate-process-env.mjs",
     "prepare": "husky"
   },
   "dependencies": {
