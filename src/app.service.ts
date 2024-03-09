@@ -1,14 +1,14 @@
 import { Injectable } from '@nestjs/common';
 import { SendMessageDTO } from './dto/send-message.dto';
 import { InjectModel } from '@nestjs/mongoose';
-import { MongooseCollection, MongooseDocument } from './mongoose.entity';
+import { MongooseCollection, MongooseDocument } from './entity/mongoose.entity';
 import { Model } from 'mongoose';
 import makeWASocket, {
   DisconnectReason,
   makeCacheableSignalKeyStore,
 } from '@whiskeysockets/baileys';
-import { useAuthState } from './useAuthState';
-import { logger } from './logger';
+import { useAuthState } from './utils/useAuthState';
+import { logger } from './utils/logger';
 
 @Injectable()
 export class AppService {

@@ -6,7 +6,7 @@ import { ConfigModule } from '@nestjs/config';
 import { ServeStaticModule } from '@nestjs/serve-static';
 import { join } from 'path';
 import { MongooseModule } from '@nestjs/mongoose';
-import { MongooseCollection, MongooseSchema } from './mongoose.entity';
+import { MongooseCollection, MongooseSchema } from './entity/mongoose.entity';
 
 @Module({
   imports: [
