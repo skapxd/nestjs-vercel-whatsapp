@@ -25,12 +25,10 @@ export class AppService {
 
   async connectToWhatsApp(): Promise<ReturnType<typeof makeWASocket>> {
     let resolve: (value: ReturnType<typeof makeWASocket>) => void;
-    let reject: (reason?: any) => void;
 
     const promise: Promise<ReturnType<typeof makeWASocket>> = new Promise(
-      async (res, rej) => {
+      async (res) => {
         resolve = res;
-        reject = rej;
       },
     );
 
