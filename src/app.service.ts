@@ -1,7 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { SendMessageDTO } from './dto/send-message.dto';
 import { InjectModel } from '@nestjs/mongoose';
-import { MongooseCollection, MongooseDocument } from './entity/mongoose.entity';
 import { Model } from 'mongoose';
 import makeWASocket, {
   DisconnectReason,
@@ -9,14 +8,18 @@ import makeWASocket, {
 } from '@whiskeysockets/baileys';
 import { useAuthState } from './utils/useAuthState';
 import { logger } from './utils/logger';
+import {
+  WhatsAppAuthStateDocument,
+  WhatsAppAuthState,
+} from './entity/whats-app-auto-state.entity';
 
 @Injectable()
 export class AppService {
   private env = process.env.NODE_ENV;
 
   constructor(
-    @InjectModel(MongooseCollection.name)
-    private readonly model: Model<MongooseDocument>,
+    @InjectModel(WhatsAppAuthState.name)
+    private readonly model: Model<WhatsAppAuthStateDocument>,
   ) {}
 
   private sock: ReturnType<typeof makeWASocket>;
@@ -71,10 +74,10 @@ export class AppService {
 
     this.sock.ev.on('messages.upsert', async (m) => {
       console.log('replying to', m.messages[0].key.remoteJid);
-      if (m.type === 'notify')
-        await this.sock.sendMessage(m.messages[0].key.remoteJid, {
-          text: 'hello',
-        });
+      // if (m.type === 'notify')
+      //   await this.sock.sendMessage(m.messages[0].key.remoteJid, {
+      //     text: 'hello',
+      //   });
     });
 
     this.sock.ev.on('connection.update', async (update) => {

@@ -2,7 +2,7 @@ import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { HydratedDocument } from 'mongoose';
 
 @Schema({ timestamps: { createdAt: true, updatedAt: true } })
-export class MongooseCollection {
+export class WhatsAppAuthState {
   @Prop()
   key: string;
 
@@ -10,6 +10,7 @@ export class MongooseCollection {
   data: string;
 }
 
-export type MongooseDocument = HydratedDocument<MongooseCollection>;
+export type WhatsAppAuthStateDocument = HydratedDocument<WhatsAppAuthState>;
 
-export const MongooseSchema = SchemaFactory.createForClass(MongooseCollection);
+export const WhatsAppAuthStateSchema =
+  SchemaFactory.createForClass(WhatsAppAuthState);

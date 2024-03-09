@@ -4,14 +4,19 @@ import { AppService } from './app.service';
 import { ServeStaticModule } from '@nestjs/serve-static';
 import { join } from 'path';
 import { MongooseModule } from '@nestjs/mongoose';
-import { MongooseCollection, MongooseSchema } from './entity/mongoose.entity';
+import {
+  WhatsAppAuthState,
+  WhatsAppAuthStateSchema,
+} from './entity/whats-app-auto-state.entity';
+import { AuthorizationApi, AuthorizationApiSchema } from './entity/authorization-api.entity';
 
 @Module({
   imports: [
     ServeStaticModule.forRoot({ rootPath: join(__dirname, '..', 'public') }),
     MongooseModule.forRoot(process.env.MONGO_DB),
     MongooseModule.forFeature([
-      { name: MongooseCollection.name, schema: MongooseSchema },
+      { name: WhatsAppAuthState.name, schema: WhatsAppAuthStateSchema },
+      { name: AuthorizationApi.name, schema: AuthorizationApiSchema },
     ]),
   ],
   controllers: [AppController],

@@ -6,8 +6,11 @@ import { mainConfig } from './utils/mainConfig';
 import * as request from 'supertest';
 import { ConfigModule } from '@nestjs/config';
 import { MongooseModule } from '@nestjs/mongoose';
-import { MongooseCollection, MongooseSchema } from './entity/mongoose.entity';
 import { AppService } from './app.service';
+import {
+  WhatsAppAuthState,
+  WhatsAppAuthStateSchema,
+} from './entity/whats-app-auto-state.entity';
 
 describe('AppController', () => {
   let app: INestApplication;
@@ -18,7 +21,7 @@ describe('AppController', () => {
         ConfigModule.forRoot(),
         MongooseModule.forRoot(process.env.MONGO_DB),
         MongooseModule.forFeature([
-          { name: MongooseCollection.name, schema: MongooseSchema },
+          { name: WhatsAppAuthState.name, schema: WhatsAppAuthStateSchema },
         ]),
       ],
       controllers: [AppController],
