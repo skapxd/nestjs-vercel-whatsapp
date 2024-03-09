@@ -85,6 +85,11 @@ export class AppService {
         statusCode: (lastDisconnect?.error as any)?.output?.statusCode,
       });
 
+      if (connection === 'open') {
+        console.log('opened connection');
+        return resolve(this.sock);
+      }
+
       if ((lastDisconnect?.error as any)?.output?.statusCode === 401)
         await this.del(process.env.NODE_ENV);
 
@@ -104,9 +109,6 @@ export class AppService {
             console.error('error reconnecting', e.message),
           );
         }
-      } else if (connection === 'open') {
-        console.log('opened connection');
-        resolve(this.sock);
       }
     });
 

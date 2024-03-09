@@ -6,13 +6,13 @@ import {
 } from '@nestjs/common';
 import { HttpAdapterHost } from '@nestjs/core';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
-import {
-  buildSwaggerHTML,
-  buildSwaggerInitJS,
-} from '@nestjs/swagger/dist/swagger-ui';
+// import {
+//   buildSwaggerHTML,
+//   buildSwaggerInitJS,
+// } from '@nestjs/swagger/dist/swagger-ui';
 import { AllExceptionsHandler } from './AllExceptionsHandler';
-import { SwaggerTheme } from 'swagger-themes';
-import { SwaggerThemeNameEnum } from 'swagger-themes/build/enums/swagger-theme-name';
+// import { SwaggerTheme } from 'swagger-themes';
+// import { SwaggerThemeNameEnum } from 'swagger-themes/build/enums/swagger-theme-name';
 import { writeFile } from 'fs/promises';
 
 export function mainConfig(app: INestApplication) {
@@ -32,7 +32,7 @@ export function mainConfig(app: INestApplication) {
     new AllExceptionsHandler(httpRef.httpAdapter.getHttpServer()),
   );
 
-  const theme = new SwaggerTheme();
+  // const theme = new SwaggerTheme();
 
   const config = new DocumentBuilder()
     .setTitle('WhatsApp example')
