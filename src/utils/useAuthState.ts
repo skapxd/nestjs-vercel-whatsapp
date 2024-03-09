@@ -9,7 +9,7 @@ import {
 
 interface AuthState {
   set: (key: string, value: string) => Promise<void>;
-  get: (key: string) => Promise<string | null>;
+  get: (key: string) => Promise<string>;
   del: (key: string) => Promise<void>;
 }
 
@@ -18,26 +18,15 @@ export const useAuthState = async (
   { set, get, del }: AuthState,
 ): Promise<{ state: AuthenticationState; saveCreds: () => Promise<void> }> => {
   const writeData = async (data: any, file: string) => {
-    const clone = JSON.stringify(data, BufferJSON.replacer);
-    // await model.updateOne(
-    //   { folder, file },
-    //   {
-    //     data: clone,
-    //   },
-    //   {
-    //     upsert: true,
-    //     returnDocument: 'after',
-    //     new: true,
-    //   },
-    // );
-
-    await set(`${folder}-${file}`, clone);
+    try {
+      const clone = JSON.stringify(data, BufferJSON.replacer);
+      await set(`${folder}-${file}`, clone);
+    } catch (error) {}
   };
 
   const readData = async (file: string) => {
     try {
       const resp = await get(`${folder}-${file}`);
-
       return JSON.parse(resp, BufferJSON.reviver);
     } catch (error) {
       return null;
@@ -46,11 +35,6 @@ export const useAuthState = async (
 
   const removeData = async (file: string) => {
     try {
-      // await model.deleteOne({
-      //   folder,
-      //   file,
-      // });
-
       await del(`${folder}-${file}`);
     } catch {}
   };
