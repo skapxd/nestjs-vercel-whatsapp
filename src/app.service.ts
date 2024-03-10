@@ -12,6 +12,11 @@ import {
   WhatsAppAuthStateDocument,
   WhatsAppAuthState,
 } from './entity/whats-app-auto-state.entity';
+import {
+  AuthorizationApi,
+  AuthorizationApiDocument,
+} from './entity/authorization-api.entity';
+import { randomUUID } from 'crypto';
 
 @Injectable()
 export class AppService {
@@ -19,13 +24,15 @@ export class AppService {
 
   constructor(
     @InjectModel(WhatsAppAuthState.name)
-    private readonly model: Model<WhatsAppAuthStateDocument>,
+    private readonly whatsAppModel: Model<WhatsAppAuthStateDocument>,
+    @InjectModel(AuthorizationApi.name)
+    private readonly authApiModel: Model<AuthorizationApiDocument>,
   ) {}
 
   private sock: ReturnType<typeof makeWASocket>;
 
   private del = async (key: string) => {
-    await this.model.deleteMany({ key: new RegExp(key) });
+    await this.whatsAppModel.deleteMany({ key: new RegExp(key) });
   };
 
   async connectToWhatsApp(): Promise<ReturnType<typeof makeWASocket>> {
@@ -39,14 +46,14 @@ export class AppService {
 
     const { state, saveCreds } = await useAuthState(`whatsapp_${this.env}`, {
       del: async (key) => {
-        await this.model.deleteOne({ key });
+        await this.whatsAppModel.deleteOne({ key });
       },
       get: async (key) => {
-        const resp = await this.model.findOne({ key });
+        const resp = await this.whatsAppModel.findOne({ key });
         return resp?.data;
       },
       set: async (key, value) => {
-        await this.model.updateOne(
+        await this.whatsAppModel.updateOne(
           { key },
           {
             data: value,
@@ -108,14 +115,52 @@ export class AppService {
     return promise;
   }
 
-  async sendMessage(dto: SendMessageDTO) {
+  async sendMessage(dto: SendMessageDTO, ip: string) {
     try {
       await this.sock.sendMessage(`${dto.phone}@s.whatsapp.net`, {
         text: dto.message,
       });
+
+      // TODO: Decrementar el contador de peticiones
+      await this.authApiModel.updateOne({ ip }, { $inc: { counter: -1 } });
     } catch (error) {
       console.error('error sending message', (error as Error).message);
       return;
     }
+  }
+
+  async getDetailToken(ip: string) {
+    throw new Error('Method not implemented.');
+  }
+
+  async getToken(ip: string) {
+    // TODO: Verificar si ya existe un token para la ip donde el registro tenga menos de 24 horas de creado
+    const now = new Date();
+    const row = await this.authApiModel.findOne({
+      ip,
+      createdAt: {
+        $gte: new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1),
+      },
+    });
+    // .where('createdAt')
+    // .gt(new Date(Date.now() - 1 * 24 * 60 * 60 * 1000).getTime());
+
+    // TODO: Si ya existe un token para la ip, retornar el token
+    if (row?.apiSecret)
+      return {
+        apiSecret: row.apiSecret,
+        remainingRequests: row.counter,
+      };
+
+    // TODO: Generar solo un token por dia y por ip
+    const apiSecret = randomUUID();
+
+    // TODO: Si no existe un token para la ip, crear un token y retornarlo
+    await this.authApiModel.create({ ip, apiSecret });
+
+    return {
+      apiSecret,
+      remainingRequests: 10,
+    };
   }
 }

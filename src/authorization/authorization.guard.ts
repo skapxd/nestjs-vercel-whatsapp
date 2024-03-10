@@ -21,15 +21,34 @@ export class AuthorizationGuard implements CanActivate {
   async canActivate(context: ExecutionContext): Promise<boolean> {
     const request = context.switchToHttp().getRequest();
 
-    const token = `Bearer ${process.env.API_SECRET}`.toLowerCase();
     const authorization = request.headers.authorization?.toLowerCase();
-
     if (!authorization) throw new UnauthorizedException();
 
-    // const row = await this.model.findOne({ ip: request.ip });
+    // TODO: Implementar tokenRoot: generado desde una variable de entorno
+    const tokenRoot = `Bearer ${process.env.API_SECRET}`.toLowerCase();
+    if (authorization === tokenRoot) return true;
 
-    if (authorization !== token) throw new UnauthorizedException();
+    const now = new Date();
+    const row = await this.model.findOne({
+      ip: request.ip,
+      createdAt: {
+        $gte: new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1),
+      },
+    });
 
-    return true;
+    if (!row) throw new UnauthorizedException();
+
+    // TODO: Implementar limites de uso
+    if (row.counter <= 0)
+      throw new UnauthorizedException({
+        error: 'Exceeded the limits of use',
+      });
+
+    // TODO: Implementar tokenUser: generado desde un valor en base de datos
+    const tokenUser = `Bearer ${row.apiSecret}`.toLowerCase();
+
+    if (authorization === tokenUser) return true;
+
+    throw new UnauthorizedException();
   }
 }
