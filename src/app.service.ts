@@ -165,7 +165,7 @@ export class AppService {
   };
 
   getDetailToken = async (ip: string) => {
-    throw new Error('Method not implemented.');
+    throw new Error(`Method not implemented. ${ip}`);
   };
 
   getToken = async (ip: string) => {
