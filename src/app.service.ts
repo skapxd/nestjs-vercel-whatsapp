@@ -36,6 +36,13 @@ export class AppService {
     private readonly queueModel: Model<QueueSendMessageDocument>,
   ) {
     this.connectToWhatsApp(this.init);
+    this.queueModel.watch().on('change', async (change) => {
+      if (change.operationType !== 'insert') return;
+
+      if (!this.sock) return;
+      await this.sendMessage(this.sock, change.fullDocument);
+      await this.queueModel.deleteOne({ _id: change.fullDocument._id });
+    });
   }
 
   private del = async (key: string) => {
@@ -122,11 +129,10 @@ export class AppService {
       );
     }
 
+    console.log('deleting', toDelete);
     await this.queueModel.deleteMany({
       _id: { $in: toDelete },
     }); // Delete documents using $in operator
-
-    process.exit(0);
   };
 
   enqueueMessage = async (dto: SendMessageDTO, ip: string) => {
