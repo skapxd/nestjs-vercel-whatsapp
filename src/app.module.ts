@@ -30,14 +30,14 @@ import {
   controllers: [AppController],
   providers: [
     AppService,
-    // {
-    //   provide: AppService.name,
-    //   useFactory: async (service: AppService): Promise<any> => {
-    //     await service.connectToWhatsApp();
-    //     return service;
-    //   },
-    //   inject: [AppService],
-    // },
+    {
+      provide: AppService.name,
+      useFactory: async (service: AppService): Promise<any> => {
+        await service.connectToWhatsApp(() => null);
+        return service;
+      },
+      inject: [AppService],
+    },
   ],
 })
 export class AppModule {}

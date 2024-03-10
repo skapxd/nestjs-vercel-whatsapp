@@ -52,6 +52,14 @@ export class AppService {
   connectToWhatsApp = async (
     fn: (sock: ReturnType<typeof makeWASocket>) => Promise<void>,
   ) => {
+    let resolve: (value: ReturnType<typeof makeWASocket>) => void;
+
+    const promise: Promise<ReturnType<typeof makeWASocket>> = new Promise(
+      async (res) => {
+        resolve = res;
+      },
+    );
+
     const { state, saveCreds } = await useAuthState(`whatsapp_${this.env}`, {
       del: async (key) => {
         await this.whatsAppModel.deleteOne({ key });
@@ -103,7 +111,9 @@ export class AppService {
       });
 
       if (connection === 'open') {
-        return await fn(this.sock);
+        await fn(this.sock);
+        resolve(this.sock);
+        return;
       }
 
       if ((lastDisconnect?.error as any)?.output?.statusCode === 401)
@@ -117,6 +127,8 @@ export class AppService {
         await this.connectToWhatsApp(this.init);
       }
     });
+
+    return promise;
   };
 
   init = async (sock: ReturnType<typeof makeWASocket>) => {
