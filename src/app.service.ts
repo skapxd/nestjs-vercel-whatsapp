@@ -25,6 +25,7 @@ import {
 @Injectable()
 export class AppService {
   private env = process.env.NODE_ENV;
+  private sock: ReturnType<typeof makeWASocket> | null;
 
   constructor(
     @InjectModel(WhatsAppAuthState.name)
@@ -34,41 +35,16 @@ export class AppService {
     @InjectModel(QueueSendMessage.name)
     private readonly queueModel: Model<QueueSendMessageDocument>,
   ) {
-    this.connectToWhatsApp()
-      .then(async (sock) => {
-        const messages = await this.queueModel.find();
-
-        const toDelete = [];
-        for (const m of messages) {
-          await this.sendMessage(sock, m).then((m) =>
-            toDelete.push({ _id: m._id }),
-          );
-        }
-
-        await this.queueModel.deleteMany({
-          _id: { $in: toDelete },
-        }); // Delete documents using $in operator
-
-        process.exit(0);
-      })
-      .catch((e) => console.error('error connecting to WhatsApp', e.message));
+    this.connectToWhatsApp(this.init);
   }
-
-  private sock: ReturnType<typeof makeWASocket> | null;
 
   private del = async (key: string) => {
     await this.whatsAppModel.deleteMany({ key: new RegExp(key) });
   };
 
-  async connectToWhatsApp(): Promise<ReturnType<typeof makeWASocket>> {
-    let resolve: (value: ReturnType<typeof makeWASocket>) => void;
-
-    const promise: Promise<ReturnType<typeof makeWASocket>> = new Promise(
-      async (res) => {
-        resolve = res;
-      },
-    );
-
+  connectToWhatsApp = async (
+    fn: (sock: ReturnType<typeof makeWASocket>) => Promise<void>,
+  ) => {
     const { state, saveCreds } = await useAuthState(`whatsapp_${this.env}`, {
       del: async (key) => {
         await this.whatsAppModel.deleteOne({ key });
@@ -120,7 +96,7 @@ export class AppService {
       });
 
       if (connection === 'open') {
-        return resolve(this.sock);
+        return await fn(this.sock);
       }
 
       if ((lastDisconnect?.error as any)?.output?.statusCode === 401)
@@ -131,16 +107,29 @@ export class AppService {
         DisconnectReason.loggedOut;
 
       if (connection === 'close' && shouldReconnect) {
-        await this.connectToWhatsApp().catch((e) =>
-          console.error('error reconnecting', e.message),
-        );
+        await this.connectToWhatsApp(this.init);
       }
     });
+  };
 
-    return promise;
-  }
+  init = async (sock: ReturnType<typeof makeWASocket>) => {
+    const messages = await this.queueModel.find();
 
-  async enqueueMessage(dto: SendMessageDTO, ip: string) {
+    const toDelete = [];
+    for (const m of messages) {
+      await this.sendMessage(sock, m).then((m) =>
+        toDelete.push({ _id: m._id }),
+      );
+    }
+
+    await this.queueModel.deleteMany({
+      _id: { $in: toDelete },
+    }); // Delete documents using $in operator
+
+    process.exit(0);
+  };
+
+  enqueueMessage = async (dto: SendMessageDTO, ip: string) => {
     try {
       await this.queueModel.create({
         message: dto.message,
@@ -151,12 +140,12 @@ export class AppService {
       console.error('error sending message', (error as Error).message);
       return;
     }
-  }
+  };
 
-  async sendMessage(
+  sendMessage = async (
     sock: ReturnType<typeof makeWASocket>,
     dto: QueueSendMessageDocument,
-  ) {
+  ) => {
     try {
       await sock.sendMessage(`${dto.phone}@s.whatsapp.net`, {
         text: dto.message,
@@ -167,13 +156,13 @@ export class AppService {
       console.error('error sending message', (error as Error).message);
       return;
     }
-  }
+  };
 
-  async getDetailToken(ip: string) {
+  getDetailToken = async (ip: string) => {
     throw new Error('Method not implemented.');
-  }
+  };
 
-  async getToken(ip: string) {
+  getToken = async (ip: string) => {
     // TODO: Verificar si ya existe un token para la ip donde el registro tenga menos de 24 horas de creado
     const now = new Date();
     const row = await this.authApiModel.findOne({
@@ -202,5 +191,5 @@ export class AppService {
       apiSecret,
       remainingRequests: 10,
     };
-  }
+  };
 }
