@@ -17,6 +17,10 @@ import {
   AuthorizationApiDocument,
 } from './entity/authorization-api.entity';
 import { randomUUID } from 'crypto';
+import {
+  QueueSendMessage,
+  QueueSendMessageDocument,
+} from './entity/queue-send-message.entity';
 
 @Injectable()
 export class AppService {
@@ -27,9 +31,30 @@ export class AppService {
     private readonly whatsAppModel: Model<WhatsAppAuthStateDocument>,
     @InjectModel(AuthorizationApi.name)
     private readonly authApiModel: Model<AuthorizationApiDocument>,
-  ) {}
+    @InjectModel(QueueSendMessage.name)
+    private readonly queueModel: Model<QueueSendMessageDocument>,
+  ) {
+    this.connectToWhatsApp()
+      .then(async (sock) => {
+        const messages = await this.queueModel.find();
 
-  private sock: ReturnType<typeof makeWASocket>;
+        const toDelete = [];
+        for (const m of messages) {
+          await this.sendMessage(sock, m).then((m) =>
+            toDelete.push({ _id: m._id }),
+          );
+        }
+
+        await this.queueModel.deleteMany({
+          _id: { $in: toDelete },
+        }); // Delete documents using $in operator
+
+        process.exit(0);
+      })
+      .catch((e) => console.error('error connecting to WhatsApp', e.message));
+  }
+
+  private sock: ReturnType<typeof makeWASocket> | null;
 
   private del = async (key: string) => {
     await this.whatsAppModel.deleteMany({ key: new RegExp(key) });
@@ -115,14 +140,29 @@ export class AppService {
     return promise;
   }
 
-  async sendMessage(dto: SendMessageDTO, ip: string) {
+  async enqueueMessage(dto: SendMessageDTO, ip: string) {
     try {
-      await this.sock.sendMessage(`${dto.phone}@s.whatsapp.net`, {
+      await this.queueModel.create({
+        message: dto.message,
+        phone: dto.phone,
+        ip,
+      });
+    } catch (error) {
+      console.error('error sending message', (error as Error).message);
+      return;
+    }
+  }
+
+  async sendMessage(
+    sock: ReturnType<typeof makeWASocket>,
+    dto: QueueSendMessageDocument,
+  ) {
+    try {
+      await sock.sendMessage(`${dto.phone}@s.whatsapp.net`, {
         text: dto.message,
       });
 
-      // TODO: Decrementar el contador de peticiones
-      await this.authApiModel.updateOne({ ip }, { $inc: { counter: -1 } });
+      return dto;
     } catch (error) {
       console.error('error sending message', (error as Error).message);
       return;

@@ -30,7 +30,6 @@ export function mainConfig(app: INestApplication) {
     .setTitle('WhatsApp example')
     .setDescription('The WhatsApp API description')
     .setVersion('1.0')
-    .addTag('send message')
     .addBearerAuth()
     .addSecurityRequirements('bearer')
     .build();

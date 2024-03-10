@@ -12,6 +12,10 @@ import {
   AuthorizationApi,
   AuthorizationApiSchema,
 } from './entity/authorization-api.entity';
+import {
+  QueueSendMessage,
+  QueueSendMessageSchema,
+} from './entity/queue-send-message.entity';
 
 @Module({
   imports: [
@@ -20,19 +24,20 @@ import {
     MongooseModule.forFeature([
       { name: WhatsAppAuthState.name, schema: WhatsAppAuthStateSchema },
       { name: AuthorizationApi.name, schema: AuthorizationApiSchema },
+      { name: QueueSendMessage.name, schema: QueueSendMessageSchema },
     ]),
   ],
   controllers: [AppController],
   providers: [
     AppService,
-    {
-      provide: AppService.name,
-      useFactory: async (service: AppService): Promise<any> => {
-        await service.connectToWhatsApp();
-        return service;
-      },
-      inject: [AppService],
-    },
+    // {
+    //   provide: AppService.name,
+    //   useFactory: async (service: AppService): Promise<any> => {
+    //     await service.connectToWhatsApp();
+    //     return service;
+    //   },
+    //   inject: [AppService],
+    // },
   ],
 })
 export class AppModule {}

@@ -28,7 +28,7 @@ export class AppController {
 
   @Post()
   @UseGuards(AuthorizationGuard)
-  sendMessage(@Body() dto: SendMessageDTO, @Req() req: Request) {
-    return this.appService.sendMessage(dto, req.ip);
+  enqueueMessage(@Body() dto: SendMessageDTO, @Req() req: Request) {
+    return this.appService.enqueueMessage(dto, req.ip);
   }
 }
